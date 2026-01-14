@@ -400,6 +400,155 @@ async def get_epg(stream_id: int, username: str, password: str, limit: int = 10)
         logger.error(f"Get EPG error: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
 
+# ==================== VOD ROUTES ====================
+
+@api_router.get("/vod/categories")
+async def get_vod_categories(username: str, password: str):
+    """Get all VOD categories"""
+    try:
+        cache_key = f"vod_categories_{username}"
+        cached = await db.cache.find_one({'key': cache_key})
+        
+        if cached and (datetime.utcnow() - cached['timestamp']).seconds < 3600:
+            return cached['data']
+        
+        categories = await xtream_api.get_vod_categories(username, password)
+        
+        await db.cache.update_one(
+            {'key': cache_key},
+            {'$set': {'key': cache_key, 'data': categories, 'timestamp': datetime.utcnow()}},
+            upsert=True
+        )
+        
+        return categories
+    except Exception as e:
+        logger.error(f"Get VOD categories error: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@api_router.get("/vod/streams")
+async def get_vod_streams(username: str, password: str, category_id: Optional[str] = None):
+    """Get VOD streams, optionally filtered by category"""
+    try:
+        cache_key = f"vod_streams_{username}_{category_id or 'all'}"
+        cached = await db.cache.find_one({'key': cache_key})
+        
+        if cached and (datetime.utcnow() - cached['timestamp']).seconds < 1800:
+            return cached['data']
+        
+        streams = await xtream_api.get_vod_streams(username, password, category_id)
+        
+        await db.cache.update_one(
+            {'key': cache_key},
+            {'$set': {'key': cache_key, 'data': streams, 'timestamp': datetime.utcnow()}},
+            upsert=True
+        )
+        
+        return streams
+    except Exception as e:
+        logger.error(f"Get VOD streams error: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@api_router.post("/vod/stream-url")
+async def get_vod_url(request: StreamUrlRequest):
+    """Generate VOD URL for playback"""
+    try:
+        vod_url = xtream_api.get_vod_url(
+            request.username,
+            request.password,
+            request.stream_id,
+            request.extension if request.extension != "m3u8" else "mp4"
+        )
+        return {"stream_url": vod_url}
+    except Exception as e:
+        logger.error(f"Get VOD URL error: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+# ==================== SERIES ROUTES ====================
+
+@api_router.get("/series/categories")
+async def get_series_categories(username: str, password: str):
+    """Get all series categories"""
+    try:
+        cache_key = f"series_categories_{username}"
+        cached = await db.cache.find_one({'key': cache_key})
+        
+        if cached and (datetime.utcnow() - cached['timestamp']).seconds < 3600:
+            return cached['data']
+        
+        categories = await xtream_api.get_series_categories(username, password)
+        
+        await db.cache.update_one(
+            {'key': cache_key},
+            {'$set': {'key': cache_key, 'data': categories, 'timestamp': datetime.utcnow()}},
+            upsert=True
+        )
+        
+        return categories
+    except Exception as e:
+        logger.error(f"Get series categories error: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@api_router.get("/series/list")
+async def get_series_list(username: str, password: str, category_id: Optional[str] = None):
+    """Get series list, optionally filtered by category"""
+    try:
+        cache_key = f"series_list_{username}_{category_id or 'all'}"
+        cached = await db.cache.find_one({'key': cache_key})
+        
+        if cached and (datetime.utcnow() - cached['timestamp']).seconds < 1800:
+            return cached['data']
+        
+        series = await xtream_api.get_series(username, password, category_id)
+        
+        await db.cache.update_one(
+            {'key': cache_key},
+            {'$set': {'key': cache_key, 'data': series, 'timestamp': datetime.utcnow()}},
+            upsert=True
+        )
+        
+        return series
+    except Exception as e:
+        logger.error(f"Get series error: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@api_router.get("/series/info/{series_id}")
+async def get_series_info_endpoint(series_id: int, username: str, password: str):
+    """Get series info with seasons and episodes"""
+    try:
+        cache_key = f"series_info_{username}_{series_id}"
+        cached = await db.cache.find_one({'key': cache_key})
+        
+        if cached and (datetime.utcnow() - cached['timestamp']).seconds < 3600:
+            return cached['data']
+        
+        series_info = await xtream_api.get_series_info(username, password, series_id)
+        
+        await db.cache.update_one(
+            {'key': cache_key},
+            {'$set': {'key': cache_key, 'data': series_info, 'timestamp': datetime.utcnow()}},
+            upsert=True
+        )
+        
+        return series_info
+    except Exception as e:
+        logger.error(f"Get series info error: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@api_router.post("/series/episode-url")
+async def get_series_episode_url(request: StreamUrlRequest):
+    """Generate series episode URL for playback"""
+    try:
+        episode_url = xtream_api.get_series_url(
+            request.username,
+            request.password,
+            request.stream_id,  # episode_id
+            request.extension if request.extension != "m3u8" else "mp4"
+        )
+        return {"stream_url": episode_url}
+    except Exception as e:
+        logger.error(f"Get episode URL error: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
 # Include the router in the main app
 app.include_router(api_router)
 
