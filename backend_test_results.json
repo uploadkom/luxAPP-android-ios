@@ -1,0 +1,165 @@
+{
+  "summary": {
+    "passed": 7,
+    "failed": 1,
+    "success_rate": 87.5
+  },
+  "detailed_results": [
+    {
+      "test": "Authentication - Valid Credentials",
+      "success": true,
+      "details": "Successfully authenticated user test29",
+      "response_data": {
+        "success": true,
+        "user_info": {
+          "username": "test29",
+          "password": "test29",
+          "message": "",
+          "auth": 1,
+          "status": "Active",
+          "exp_date": null,
+          "is_trial": "0",
+          "active_cons": "1",
+          "created_at": "1738519357",
+          "max_connections": "15",
+          "allowed_output_formats": [
+            "m3u8",
+            "ts",
+            "rtmp"
+          ]
+        },
+        "server_info": {
+          "url": "s.luxuztv.com",
+          "port": "25461",
+          "https_port": "443",
+          "server_protocol": "https",
+          "rtmp_port": "25462",
+          "timezone": "Europe/Ljubljana",
+          "timestamp_now": 1768410480,
+          "time_now": "2026-01-14 18:08:00"
+        },
+        "error": null
+      },
+      "timestamp": "2026-01-14 17:08:00"
+    },
+    {
+      "test": "Authentication - Invalid Credentials",
+      "success": true,
+      "details": "Correctly rejected invalid credentials: Client error '404 Not Found' for url 'https://s.luxuztv.com/player_api.php?username=invalid_user&password=invalid_pass'\nFor more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/404",
+      "response_data": {
+        "success": false,
+        "user_info": null,
+        "server_info": null,
+        "error": "Client error '404 Not Found' for url 'https://s.luxuztv.com/player_api.php?username=invalid_user&password=invalid_pass'\nFor more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/404"
+      },
+      "timestamp": "2026-01-14 17:08:01"
+    },
+    {
+      "test": "Live Categories",
+      "success": true,
+      "details": "Retrieved 26 categories. First call: 0.02s, Second call: 0.01s, Cache working: True",
+      "response_data": {
+        "categories_count": 26,
+        "sample_category": {
+          "category_id": "4",
+          "category_name": "SRBIJA",
+          "parent_id": 0
+        },
+        "cache_performance": {
+          "first_call": 0.02164626121520996,
+          "second_call": 0.01212310791015625
+        }
+      },
+      "timestamp": "2026-01-14 17:08:01"
+    },
+    {
+      "test": "Live Streams - All",
+      "success": true,
+      "details": "Retrieved 623 streams. First call: 0.81s, Second call: 0.03s, Cache working: True",
+      "response_data": {
+        "streams_count": 623,
+        "sample_stream": {
+          "num": 1,
+          "name": "RTS 1",
+          "stream_type": "live",
+          "stream_id": 1,
+          "stream_icon": "http://s.luxuztv.com:25461/images/11d3014a708f02cca7b7df747e3b4e81.png",
+          "epg_channel_id": "RTS1.rs",
+          "added": "1709930387",
+          "category_id": "4",
+          "custom_sid": "",
+          "tv_archive": 0,
+          "direct_source": "",
+          "tv_archive_duration": 0
+        },
+        "cache_performance": {
+          "first_call": 0.8075056076049805,
+          "second_call": 0.02503657341003418
+        }
+      },
+      "timestamp": "2026-01-14 17:08:03"
+    },
+    {
+      "test": "Live Streams - Category Filter (SRBIJA)",
+      "success": true,
+      "details": "Retrieved 52 streams for category_id=4",
+      "response_data": {
+        "streams_count": 52,
+        "sample_stream": {
+          "num": 1,
+          "name": "RTS 1",
+          "stream_type": "live",
+          "stream_id": 1,
+          "stream_icon": "http://s.luxuztv.com:25461/images/11d3014a708f02cca7b7df747e3b4e81.png",
+          "epg_channel_id": "RTS1.rs",
+          "added": "1709930387",
+          "category_id": "4",
+          "custom_sid": "",
+          "tv_archive": 0,
+          "direct_source": "",
+          "tv_archive_duration": 0
+        }
+      },
+      "timestamp": "2026-01-14 17:08:03"
+    },
+    {
+      "test": "Stream URL Generation",
+      "success": true,
+      "details": "Generated correct HLS URL: https://s.luxuztv.com:443/live/test29/test29/1.m3u8",
+      "response_data": {
+        "stream_url": "https://s.luxuztv.com:443/live/test29/test29/1.m3u8"
+      },
+      "timestamp": "2026-01-14 17:08:04"
+    },
+    {
+      "test": "Stream URL Generation - Multiple IDs",
+      "success": true,
+      "details": "Successfully generated URLs for all 3 stream IDs",
+      "response_data": {
+        "tested_ids": [
+          1,
+          100,
+          999
+        ],
+        "success_count": 3
+      },
+      "timestamp": "2026-01-14 17:08:04"
+    },
+    {
+      "test": "CORS Headers",
+      "success": false,
+      "details": "No CORS headers found",
+      "response_data": {
+        "headers": {
+          "content-length": "50",
+          "content-type": "application/json",
+          "date": "Wed, 14 Jan 2026 17:08:04 GMT",
+          "server": "uvicorn",
+          "via": "1.1 google",
+          "alt-svc": "h3=\":443\"; ma=2592000,h3-29=\":443\"; ma=2592000"
+        }
+      },
+      "timestamp": "2026-01-14 17:08:05"
+    }
+  ]
+}
