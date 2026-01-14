@@ -172,6 +172,111 @@ class XtreamCodesAPI:
         except Exception as e:
             logger.error(f"Get EPG error: {str(e)}")
             return []
+    
+    async def get_vod_categories(self, username: str, password: str) -> List[Dict[str, Any]]:
+        """Get all VOD categories"""
+        try:
+            params = {
+                'username': username,
+                'password': password,
+                'action': 'get_vod_categories'
+            }
+            url = f"{self.base_url}/player_api.php?{urlencode(params)}"
+            
+            async with httpx.AsyncClient(verify=False, timeout=30.0) as client:
+                response = await client.get(url)
+                response.raise_for_status()
+                return response.json()
+        except Exception as e:
+            logger.error(f"Get VOD categories error: {str(e)}")
+            return []
+    
+    async def get_vod_streams(self, username: str, password: str, category_id: Optional[str] = None) -> List[Dict[str, Any]]:
+        """Get VOD streams, optionally filtered by category"""
+        try:
+            params = {
+                'username': username,
+                'password': password,
+                'action': 'get_vod_streams'
+            }
+            if category_id:
+                params['category_id'] = category_id
+            
+            url = f"{self.base_url}/player_api.php?{urlencode(params)}"
+            
+            async with httpx.AsyncClient(verify=False, timeout=30.0) as client:
+                response = await client.get(url)
+                response.raise_for_status()
+                return response.json()
+        except Exception as e:
+            logger.error(f"Get VOD streams error: {str(e)}")
+            return []
+    
+    async def get_series_categories(self, username: str, password: str) -> List[Dict[str, Any]]:
+        """Get all series categories"""
+        try:
+            params = {
+                'username': username,
+                'password': password,
+                'action': 'get_series_categories'
+            }
+            url = f"{self.base_url}/player_api.php?{urlencode(params)}"
+            
+            async with httpx.AsyncClient(verify=False, timeout=30.0) as client:
+                response = await client.get(url)
+                response.raise_for_status()
+                return response.json()
+        except Exception as e:
+            logger.error(f"Get series categories error: {str(e)}")
+            return []
+    
+    async def get_series(self, username: str, password: str, category_id: Optional[str] = None) -> List[Dict[str, Any]]:
+        """Get series, optionally filtered by category"""
+        try:
+            params = {
+                'username': username,
+                'password': password,
+                'action': 'get_series'
+            }
+            if category_id:
+                params['category_id'] = category_id
+            
+            url = f"{self.base_url}/player_api.php?{urlencode(params)}"
+            
+            async with httpx.AsyncClient(verify=False, timeout=30.0) as client:
+                response = await client.get(url)
+                response.raise_for_status()
+                return response.json()
+        except Exception as e:
+            logger.error(f"Get series error: {str(e)}")
+            return []
+    
+    async def get_series_info(self, username: str, password: str, series_id: int) -> Dict[str, Any]:
+        """Get series info with seasons and episodes"""
+        try:
+            params = {
+                'username': username,
+                'password': password,
+                'action': 'get_series_info',
+                'series_id': series_id
+            }
+            url = f"{self.base_url}/player_api.php?{urlencode(params)}"
+            
+            async with httpx.AsyncClient(verify=False, timeout=30.0) as client:
+                response = await client.get(url)
+                response.raise_for_status()
+                return response.json()
+        except Exception as e:
+            logger.error(f"Get series info error: {str(e)}")
+            return {}
+    
+    def get_vod_url(self, username: str, password: str, vod_id: int, extension: str = "mp4") -> str:
+        """Generate VOD URL for playback"""
+        return f"{self.base_url}/movie/{username}/{password}/{vod_id}.{extension}"
+    
+    def get_series_url(self, username: str, password: str, episode_id: int, extension: str = "mp4") -> str:
+        """Generate series episode URL for playback"""
+        return f"{self.base_url}/series/{username}/{password}/{episode_id}.{extension}"
 
 # Initialize API client
 xtream_api = XtreamCodesAPI()
