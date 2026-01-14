@@ -1,16 +1,50 @@
-import { Text, View, StyleSheet, Image } from "react-native";
+import React, { useEffect } from 'react';
+import { View, Text, StyleSheet } from 'react-native';
+import { useRouter } from 'expo-router';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useFonts } from 'expo-font';
+import * as SplashScreen from 'expo-splash-screen';
 
-const EXPO_PUBLIC_BACKEND_URL = process.env.EXPO_PUBLIC_BACKEND_URL;
+SplashScreen.preventAutoHideAsync();
 
 export default function Index() {
-  console.log(EXPO_PUBLIC_BACKEND_URL, "EXPO_PUBLIC_BACKEND_URL");
+  const router = useRouter();
+  const [fontsLoaded] = useFonts({
+    'Rubik-Regular': require('../assets/fonts/Rubik-Regular.ttf'),
+    'Rubik-Medium': require('../assets/fonts/Rubik-Medium.ttf'),
+    'Rubik-Bold': require('../assets/fonts/Rubik-Bold.ttf'),
+  });
+
+  useEffect(() => {
+    async function prepare() {
+      if (fontsLoaded) {
+        await SplashScreen.hideAsync();
+        checkAuth();
+      }
+    }
+    prepare();
+  }, [fontsLoaded]);
+
+  const checkAuth = async () => {
+    try {
+      const credentials = await AsyncStorage.getItem('user_credentials');
+      if (credentials) {
+        router.replace('/home');
+      } else {
+        router.replace('/login');
+      }
+    } catch (error) {
+      router.replace('/login');
+    }
+  };
+
+  if (!fontsLoaded) {
+    return null;
+  }
 
   return (
     <View style={styles.container}>
-      <Image
-        source={require("../assets/images/app-image.png")}
-        style={styles.image}
-      />
+      <Text style={styles.logo}>LUXUZ TV</Text>
     </View>
   );
 }
@@ -18,13 +52,14 @@ export default function Index() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#0c0c0c",
-    alignItems: "center",
-    justifyContent: "center",
+    backgroundColor: '#000000',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
-  image: {
-    width: "100%",
-    height: "100%",
-    resizeMode: "contain",
+  logo: {
+    fontSize: 48,
+    fontFamily: 'Rubik-Bold',
+    color: '#FF6B35',
+    letterSpacing: 2,
   },
 });
