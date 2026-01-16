@@ -198,7 +198,7 @@ const styles = StyleSheet.create({
   loadingText: {
     marginTop: 16,
     fontSize: 16,
-    fontFamily: 'Rubik-Regular',
+    
     color: '#CCCCCC',
   },
   errorContainer: {
@@ -211,7 +211,7 @@ const styles = StyleSheet.create({
   errorText: {
     marginTop: 16,
     fontSize: 18,
-    fontFamily: 'Rubik-Medium',
+    
     color: '#F44336',
     textAlign: 'center',
   },
@@ -224,7 +224,7 @@ const styles = StyleSheet.create({
   },
   backButtonText: {
     fontSize: 16,
-    fontFamily: 'Rubik-Bold',
+    
     color: '#000000',
   },
   videoContainer: {
@@ -248,7 +248,7 @@ const styles = StyleSheet.create({
   bufferingText: {
     marginTop: 16,
     fontSize: 16,
-    fontFamily: 'Rubik-Regular',
+    
     color: '#CCCCCC',
   },
   controlsOverlay: {
@@ -273,7 +273,7 @@ const styles = StyleSheet.create({
   streamTitle: {
     flex: 1,
     fontSize: 18,
-    fontFamily: 'Rubik-Bold',
+    
     color: '#FFFFFF',
     textAlign: 'center',
   },
@@ -314,7 +314,7 @@ const styles = StyleSheet.create({
   },
   liveText: {
     fontSize: 12,
-    fontFamily: 'Rubik-Bold',
+    
     color: '#FFFFFF',
   },
 });

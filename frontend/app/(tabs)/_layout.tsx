@@ -5,27 +5,28 @@ export default function TabLayout() {
   return (
     <Tabs
       screenOptions={{
-        headerShown: false,
-        tabBarActiveTintColor: '#FF6B35',
-        tabBarInactiveTintColor: '#666',
         tabBarStyle: {
-          backgroundColor: '#000000',
+          backgroundColor: '#0A0A0A',
           borderTopColor: '#1A1A1A',
-          borderTopWidth: 1,
-          paddingBottom: 8,
-          paddingTop: 8,
-          height: 70,
         },
-        tabBarLabelStyle: {
-          fontFamily: 'Rubik-Medium',
-          fontSize: 11,
-        },
+        tabBarActiveTintColor: '#FF6B35',
+        tabBarInactiveTintColor: '#666666',
+        headerShown: false,
       }}
     >
       <Tabs.Screen
+        name="home"
+        options={{
+          title: 'Početna',
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="home" size={size} color={color} />
+          ),
+        }}
+      />
+      <Tabs.Screen
         name="live"
         options={{
-          title: 'UŽIVO',
+          title: 'Uživo TV',
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="tv" size={size} color={color} />
           ),
@@ -34,7 +35,7 @@ export default function TabLayout() {
       <Tabs.Screen
         name="vod"
         options={{
-          title: 'FILMOVI',
+          title: 'Filmovi',
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="film" size={size} color={color} />
           ),
@@ -43,18 +44,18 @@ export default function TabLayout() {
       <Tabs.Screen
         name="series"
         options={{
-          title: 'SERIJE',
+          title: 'Serije',
           tabBarIcon: ({ color, size }) => (
-            <Ionicons name="list" size={size} color={color} />
+            <Ionicons name="layers" size={size} color={color} />
           ),
         }}
       />
       <Tabs.Screen
-        name="settings"
+        name="profile"
         options={{
-          title: 'OPCIJE',
+          title: 'Profil',
           tabBarIcon: ({ color, size }) => (
-            <Ionicons name="settings" size={size} color={color} />
+            <Ionicons name="person" size={size} color={color} />
           ),
         }}
       />

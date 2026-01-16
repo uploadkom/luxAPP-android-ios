@@ -9,13 +9,13 @@ import {
   KeyboardAvoidingView,
   Platform,
   Alert,
-  ImageBackground,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
 import { Ionicons } from '@expo/vector-icons';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 const API_URL = process.env.EXPO_PUBLIC_BACKEND_URL || 'http://localhost:8001';
 
@@ -48,7 +48,7 @@ export default function LoginScreen() {
             user_info: response.data.user_info,
           })
         );
-        router.replace('/(tabs)/live');
+        router.replace('/(tabs)/home');
       } else {
         Alert.alert('Greška', response.data.error || 'Neuspešna prijava');
       }
@@ -64,81 +64,83 @@ export default function LoginScreen() {
   };
 
   return (
-    <KeyboardAvoidingView
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      style={styles.container}
-    >
-      <LinearGradient
-        colors={['#000000', '#1A1A1A', '#000000']}
-        style={styles.gradient}
+    <SafeAreaView style={{ flex: 1 }}>
+      <KeyboardAvoidingView
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        style={styles.container}
       >
-        <View style={styles.content}>
-          <View style={styles.logoContainer}>
-            <View style={styles.logoCircle}>
-              <Ionicons name="tv" size={48} color="#FF6B35" />
-            </View>
-            <Text style={styles.logo}>LUXUZ TV</Text>
-            <Text style={styles.subtitle}>Premium IPTV Experience</Text>
-          </View>
-
-          <View style={styles.form}>
-            <View style={styles.inputWrapper}>
-              <Ionicons name="person-outline" size={20} color="#FF6B35" style={styles.inputIcon} />
-              <TextInput
-                style={styles.input}
-                value={username}
-                onChangeText={setUsername}
-                placeholder="Korisničko Ime"
-                placeholderTextColor="#666"
-                autoCapitalize="none"
-                autoCorrect={false}
-              />
+        <LinearGradient
+          colors={['#000000', '#1A1A1A', '#000000']}
+          style={styles.gradient}
+        >
+          <View style={styles.content}>
+            <View style={styles.logoContainer}>
+              <View style={styles.logoCircle}>
+                <Ionicons name="tv" size={48} color="#FF6B35" />
+              </View>
+              <Text style={styles.logo}>LUXUZ TV</Text>
+              <Text style={styles.subtitle}>Premium IPTV Experience</Text>
             </View>
 
-            <View style={styles.inputWrapper}>
-              <Ionicons name="lock-closed-outline" size={20} color="#FF6B35" style={styles.inputIcon} />
-              <TextInput
-                style={styles.input}
-                value={password}
-                onChangeText={setPassword}
-                placeholder="Lozinka"
-                placeholderTextColor="#666"
-                secureTextEntry={!showPassword}
-                autoCapitalize="none"
-                autoCorrect={false}
-              />
-              <TouchableOpacity onPress={() => setShowPassword(!showPassword)} style={styles.eyeIcon}>
-                <Ionicons name={showPassword ? "eye-outline" : "eye-off-outline"} size={20} color="#666" />
-              </TouchableOpacity>
-            </View>
+            <View style={styles.form}>
+              <View style={styles.inputWrapper}>
+                <Ionicons name="person-outline" size={20} color="#FF6B35" style={styles.inputIcon} />
+                <TextInput
+                  style={styles.input}
+                  value={username}
+                  onChangeText={setUsername}
+                  placeholder="Korisničko Ime"
+                  placeholderTextColor="#666"
+                  autoCapitalize="none"
+                  autoCorrect={false}
+                />
+              </View>
 
-            <TouchableOpacity
-              style={[styles.button, loading && styles.buttonDisabled]}
-              onPress={handleLogin}
-              disabled={loading}
-            >
-              <LinearGradient
-                colors={['#FF6B35', '#FF8C5A']}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 0 }}
-                style={styles.buttonGradient}
+              <View style={styles.inputWrapper}>
+                <Ionicons name="lock-closed-outline" size={20} color="#FF6B35" style={styles.inputIcon} />
+                <TextInput
+                  style={styles.input}
+                  value={password}
+                  onChangeText={setPassword}
+                  placeholder="Lozinka"
+                  placeholderTextColor="#666"
+                  secureTextEntry={!showPassword}
+                  autoCapitalize="none"
+                  autoCorrect={false}
+                />
+                <TouchableOpacity onPress={() => setShowPassword(!showPassword)} style={styles.eyeIcon}>
+                  <Ionicons name={showPassword ? "eye-outline" : "eye-off-outline"} size={20} color="#666" />
+                </TouchableOpacity>
+              </View>
+
+              <TouchableOpacity
+                style={[styles.button, loading && styles.buttonDisabled]}
+                onPress={handleLogin}
+                disabled={loading}
               >
-                {loading ? (
-                  <ActivityIndicator color="#FFF" />
-                ) : (
-                  <Text style={styles.buttonText}>PRIJAVITE SE</Text>
-                )}
-              </LinearGradient>
-            </TouchableOpacity>
+                <LinearGradient
+                  colors={['#FF6B35', '#FF8C5A']}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 0 }}
+                  style={styles.buttonGradient}
+                >
+                  {loading ? (
+                    <ActivityIndicator color="#FFF" />
+                  ) : (
+                    <Text style={styles.buttonText}>PRIJAVITE SE</Text>
+                  )}
+                </LinearGradient>
+              </TouchableOpacity>
 
-            <View style={styles.portalInfo}>
-              <Ionicons name="server-outline" size={16} color="#FF6B35" />
-              <Text style={styles.portalText}>  Portal: s.luxuztv.com:443</Text>
+              <View style={styles.portalInfo}>
+                <Ionicons name="server-outline" size={16} color="#FF6B35" />
+                <Text style={styles.portalText}>  Portal: s.luxuztv.com:443</Text>
+              </View>
             </View>
           </View>
-        </View>
-      </LinearGradient>
-    </KeyboardAvoidingView>
+        </LinearGradient>
+      </KeyboardAvoidingView>
+    </SafeAreaView>
   );
 }
 
@@ -148,6 +150,8 @@ const styles = StyleSheet.create({
   },
   gradient: {
     flex: 1,
+    justifyContent: 'center',
+    paddingTop: Platform.OS === 'ios' ? 0 : 40,
   },
   content: {
     flex: 1,
@@ -171,16 +175,13 @@ const styles = StyleSheet.create({
   },
   logo: {
     fontSize: 48,
-    fontFamily: 'Rubik-Bold',
+    
     color: '#FF6B35',
     letterSpacing: 4,
-    textShadowColor: 'rgba(255, 107, 53, 0.5)',
-    textShadowOffset: { width: 0, height: 2 },
-    textShadowRadius: 8,
   },
   subtitle: {
     fontSize: 14,
-    fontFamily: 'Rubik-Regular',
+    
     color: '#999',
     marginTop: 4,
     letterSpacing: 1,
@@ -205,7 +206,7 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingVertical: 16,
     fontSize: 16,
-    fontFamily: 'Rubik-Regular',
+    
     color: '#FFFFFF',
   },
   eyeIcon: {
@@ -215,11 +216,6 @@ const styles = StyleSheet.create({
     marginTop: 8,
     borderRadius: 12,
     overflow: 'hidden',
-    elevation: 4,
-    shadowColor: '#FF6B35',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
   },
   buttonGradient: {
     paddingVertical: 16,
@@ -231,7 +227,7 @@ const styles = StyleSheet.create({
   },
   buttonText: {
     fontSize: 16,
-    fontFamily: 'Rubik-Bold',
+    
     color: '#FFFFFF',
     letterSpacing: 2,
   },
@@ -248,7 +244,7 @@ const styles = StyleSheet.create({
   },
   portalText: {
     fontSize: 12,
-    fontFamily: 'Rubik-Regular',
+    
     color: '#CCCCCC',
   },
 });

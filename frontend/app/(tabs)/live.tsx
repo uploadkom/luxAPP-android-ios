@@ -9,6 +9,7 @@ import {
   Image,
   Alert,
   TextInput,
+  Dimensions,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -17,6 +18,7 @@ import axios from 'axios';
 import { Ionicons } from '@expo/vector-icons';
 
 const API_URL = process.env.EXPO_PUBLIC_BACKEND_URL || 'http://localhost:8001';
+const { width } = Dimensions.get('window');
 
 interface Category {
   category_id: string;
@@ -28,11 +30,13 @@ interface Stream {
   name: string;
   stream_icon?: string;
   tv_archive?: number;
+  epg_channel_id?: string;
 }
 
 interface Credentials {
   username: string;
   password: string;
+  user_info?: any;
 }
 
 export default function LiveTVScreen() {
@@ -45,6 +49,7 @@ export default function LiveTVScreen() {
   const [loading, setLoading] = useState(true);
   const [streamsLoading, setStreamsLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [favorites, setFavorites] = useState<number[]>([]);
 
   useEffect(() => {
     loadCredentials();
@@ -54,6 +59,7 @@ export default function LiveTVScreen() {
     if (credentials) {
       loadCategories();
       loadStreams();
+      loadFavorites();
     }
   }, [credentials]);
 
@@ -88,6 +94,17 @@ export default function LiveTVScreen() {
     }
   };
 
+  const loadFavorites = async () => {
+    try {
+      const favs = await AsyncStorage.getItem('favorites');
+      if (favs) {
+        setFavorites(JSON.parse(favs));
+      }
+    } catch (error) {
+      console.error('Error loading favorites:', error);
+    }
+  };
+
   const loadCategories = async () => {
     if (!credentials) return;
     try {
@@ -117,6 +134,21 @@ export default function LiveTVScreen() {
       console.error('Error loading streams:', error);
     } finally {
       setStreamsLoading(false);
+    }
+  };
+
+  const toggleFavorite = async (streamId: number) => {
+    try {
+      let newFavorites = [...favorites];
+      if (newFavorites.includes(streamId)) {
+        newFavorites = newFavorites.filter(id => id !== streamId);
+      } else {
+        newFavorites.push(streamId);
+      }
+      setFavorites(newFavorites);
+      await AsyncStorage.setItem('favorites', JSON.stringify(newFavorites));
+    } catch (error) {
+      console.error('Error toggling favorite:', error);
     }
   };
 
@@ -162,35 +194,55 @@ export default function LiveTVScreen() {
       style={styles.streamCard}
       onPress={() => handlePlayStream(item)}
     >
-      <View style={styles.streamIcon}>
-        {item.stream_icon ? (
-          <Image
-            source={{ uri: item.stream_icon }}
-            style={styles.streamIconImage}
-            resizeMode=\"contain\"
-          />
-        ) : (
-          <Ionicons name=\"tv\" size={32} color=\"#FF6B35\" />
-        )}
-      </View>
-      <View style={styles.streamInfo}>
-        <Text style={styles.streamName} numberOfLines={2}>
-          {item.name}
-        </Text>
-        {item.tv_archive === 1 && (
-          <View style={styles.archiveBadge}>
-            <Text style={styles.archiveText}>ARHIVA</Text>
+      <View style={styles.streamMain}>
+        <View style={styles.streamIcon}>
+          {item.stream_icon ? (
+            <Image
+              source={{ uri: item.stream_icon }}
+              style={styles.streamIconImage}
+              resizeMode="contain"
+            />
+          ) : (
+            <Ionicons name="tv" size={32} color="#FF6B35" />
+          )}
+        </View>
+        <View style={styles.streamInfo}>
+          <Text style={styles.streamName} numberOfLines={2}>
+            {item.name}
+          </Text>
+          <View style={styles.streamMeta}>
+            {item.tv_archive === 1 && (
+              <View style={styles.archiveBadge}>
+                <Ionicons name="time" size={12} color="#FFF" />
+                <Text style={styles.archiveText}>ARHIVA</Text>
+              </View>
+            )}
+            {item.epg_channel_id && (
+              <View style={styles.epgBadge}>
+                <Ionicons name="calendar" size={12} color="#FFF" />
+                <Text style={styles.epgText}>EPG</Text>
+              </View>
+            )}
           </View>
-        )}
+        </View>
       </View>
-      <Ionicons name=\"play-circle\" size={40} color=\"#FF6B35\" />
+      <TouchableOpacity
+        style={styles.favoriteButton}
+        onPress={() => toggleFavorite(item.stream_id)}
+      >
+        <Ionicons
+          name={favorites.includes(item.stream_id) ? "heart" : "heart-outline"}
+          size={24}
+          color={favorites.includes(item.stream_id) ? "#FF4444" : "#666"}
+        />
+      </TouchableOpacity>
     </TouchableOpacity>
   );
 
   if (loading) {
     return (
       <View style={styles.loadingContainer}>
-        <ActivityIndicator size=\"large\" color=\"#FF6B35\" />
+        <ActivityIndicator size="large" color="#FF6B35" />
         <Text style={styles.loadingText}>Učitavanje...</Text>
       </View>
     );
@@ -201,24 +253,27 @@ export default function LiveTVScreen() {
       {/* Header */}
       <View style={styles.header}>
         <View style={styles.headerLeft}>
-          <Ionicons name=\"tv\" size={28} color=\"#FF6B35\" />
-          <Text style={styles.headerTitle}>UŽIVO</Text>
+          <Ionicons name="tv" size={28} color="#FF6B35" />
+          <Text style={styles.headerTitle}>UŽIVO TV</Text>
         </View>
+        <TouchableOpacity onPress={() => router.push('/(tabs)/profile')}>
+          <Ionicons name="filter" size={24} color="#FFF" />
+        </TouchableOpacity>
       </View>
 
       {/* Search */}
       <View style={styles.searchContainer}>
-        <Ionicons name=\"search\" size={20} color=\"#666\" style={styles.searchIcon} />
+        <Ionicons name="search" size={20} color="#666" style={styles.searchIcon} />
         <TextInput
           style={styles.searchInput}
           value={searchQuery}
           onChangeText={setSearchQuery}
-          placeholder=\"Pretra\u017eite kanale...\"
-          placeholderTextColor=\"#666\"
+          placeholder="Pretražite kanale..."
+          placeholderTextColor="#666"
         />
         {searchQuery ? (
           <TouchableOpacity onPress={() => setSearchQuery('')}>
-            <Ionicons name=\"close-circle\" size={20} color=\"#666\" />
+            <Ionicons name="close-circle" size={20} color="#666" />
           </TouchableOpacity>
         ) : null}
       </View>
@@ -260,7 +315,7 @@ export default function LiveTVScreen() {
       <View style={styles.streamsContainer}>
         {streamsLoading ? (
           <View style={styles.loadingContainer}>
-            <ActivityIndicator size=\"large\" color=\"#FF6B35\" />
+            <ActivityIndicator size="large" color="#FF6B35" />
           </View>
         ) : (
           <FlatList
@@ -288,16 +343,16 @@ const styles = StyleSheet.create({
   loadingText: {
     marginTop: 16,
     fontSize: 16,
-    fontFamily: 'Rubik-Regular',
+    fontWeight: 'normal',
     color: '#CCCCCC',
   },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 16,
-    paddingTop: 48,
+    paddingHorizontal: 20,
+    paddingVertical: 20,
+    paddingTop: 50,
     backgroundColor: 'rgba(0, 0, 0, 0.9)',
   },
   headerLeft: {
@@ -306,7 +361,7 @@ const styles = StyleSheet.create({
   },
   headerTitle: {
     fontSize: 24,
-    fontFamily: 'Rubik-Bold',
+    fontWeight: 'bold',
     color: '#FFFFFF',
     marginLeft: 12,
     letterSpacing: 1,
@@ -315,7 +370,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: '#1A1A1A',
-    marginHorizontal: 16,
+    marginHorizontal: 20,
     marginVertical: 12,
     paddingHorizontal: 16,
     borderRadius: 12,
@@ -329,12 +384,12 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingVertical: 12,
     fontSize: 16,
-    fontFamily: 'Rubik-Regular',
+    fontWeight: 'normal',
     color: '#FFFFFF',
   },
   categoriesContainer: {
     paddingVertical: 12,
-    paddingHorizontal: 16,
+    paddingHorizontal: 20,
     flexDirection: 'row',
   },
   categoriesList: {
@@ -352,7 +407,7 @@ const styles = StyleSheet.create({
   categoryChipActive: {},
   categoryText: {
     fontSize: 14,
-    fontFamily: 'Rubik-Medium',
+    fontWeight: '500',
     color: '#CCCCCC',
   },
   categoryTextActive: {
@@ -360,25 +415,31 @@ const styles = StyleSheet.create({
   },
   streamsContainer: {
     flex: 1,
-    paddingHorizontal: 16,
+    paddingHorizontal: 20,
   },
   streamsList: {
-    paddingBottom: 16,
+    paddingBottom: 20,
   },
   streamCard: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'space-between',
     backgroundColor: 'rgba(26, 26, 26, 0.6)',
     padding: 12,
-    marginBottom: 8,
+    marginBottom: 10,
     borderRadius: 12,
     borderLeftWidth: 4,
     borderLeftColor: '#FF6B35',
   },
+  streamMain: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+  },
   streamIcon: {
-    width: 64,
-    height: 64,
-    borderRadius: 12,
+    width: 60,
+    height: 60,
+    borderRadius: 10,
     backgroundColor: '#000000',
     justifyContent: 'center',
     alignItems: 'center',
@@ -387,8 +448,8 @@ const styles = StyleSheet.create({
     borderColor: '#333',
   },
   streamIconImage: {
-    width: 56,
-    height: 56,
+    width: 50,
+    height: 50,
     borderRadius: 8,
   },
   streamInfo: {
@@ -396,20 +457,43 @@ const styles = StyleSheet.create({
   },
   streamName: {
     fontSize: 16,
-    fontFamily: 'Rubik-Medium',
+    fontWeight: '500',
     color: '#FFFFFF',
-    marginBottom: 4,
+    marginBottom: 6,
+  },
+  streamMeta: {
+    flexDirection: 'row',
   },
   archiveBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
     backgroundColor: '#4CAF50',
     paddingHorizontal: 8,
-    paddingVertical: 2,
+    paddingVertical: 3,
     borderRadius: 4,
-    alignSelf: 'flex-start',
+    marginRight: 6,
   },
   archiveText: {
     fontSize: 10,
-    fontFamily: 'Rubik-Bold',
-    color: '#000000',
+    fontWeight: 'bold',
+    color: '#FFF',
+    marginLeft: 3,
+  },
+  epgBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#2196F3',
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 4,
+  },
+  epgText: {
+    fontSize: 10,
+    fontWeight: 'bold',
+    color: '#FFF',
+    marginLeft: 3,
+  },
+  favoriteButton: {
+    padding: 8,
   },
 });
