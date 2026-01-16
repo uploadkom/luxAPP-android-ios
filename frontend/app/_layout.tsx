@@ -13,6 +13,8 @@ export default function RootLayout() {
           <Stack.Screen name="login" />
           <Stack.Screen name="(tabs)" />
           <Stack.Screen name="player" />
+          <Stack.Screen name="movie/[id]" />
+          <Stack.Screen name="series/[id]" />
         </Stack>
       </GestureHandlerRootView>
     </SafeAreaProvider>
