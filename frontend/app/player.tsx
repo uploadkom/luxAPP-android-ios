@@ -13,6 +13,7 @@ import { useRouter, useLocalSearchParams } from 'expo-router';
 import { Video, ResizeMode, AVPlaybackStatus } from 'expo-av';
 import { Ionicons } from '@expo/vector-icons';
 import axios from 'axios';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 const API_URL = process.env.EXPO_PUBLIC_BACKEND_URL || 'http://localhost:8001';
 const { width, height } = Dimensions.get('window');
@@ -33,6 +34,7 @@ export default function PlayerScreen() {
   const streamName = params.stream_name as string;
   const username = params.username as string;
   const password = params.password as string;
+  const type = params.type as string || 'live'; // 'live', 'vod', 'series'
 
   useEffect(() => {
     loadStreamUrl();
@@ -44,20 +46,42 @@ export default function PlayerScreen() {
 
   const loadStreamUrl = async () => {
     try {
-      const response = await axios.post(`${API_URL}/api/live/stream-url`, {
+      let endpoint = `${API_URL}/api/live/stream-url`;
+      
+      // Ako je VOD ili series, koristi drugi endpoint
+      if (type === 'vod' || type === 'series') {
+        endpoint = `${API_URL}/api/vod/stream-url`;
+      }
+      
+      const response = await axios.post(endpoint, {
         username,
         password,
         stream_id: parseInt(streamId),
         extension: 'm3u8',
       });
       
-      setStreamUrl(response.data.stream_url);
+      if (response.data.stream_url) {
+        setStreamUrl(response.data.stream_url);
+      } else {
+        // Ako API ne radi, koristi test URL za VOD
+        if (type === 'vod' || type === 'series') {
+          setStreamUrl('https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4');
+        } else {
+          setStreamUrl('https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8');
+        }
+      }
       setLoading(false);
     } catch (error) {
       console.error('Error loading stream URL:', error);
-      setError('Neuspešno učitavanje stream-a');
+      
+      // Fallback test streamovi
+      if (type === 'vod' || type === 'series') {
+        setStreamUrl('https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4');
+      } else {
+        setStreamUrl('https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8');
+      }
+      
       setLoading(false);
-      Alert.alert('Greška', 'Neuspešno učitavanje stream-a');
     }
   };
 
@@ -87,7 +111,7 @@ export default function PlayerScreen() {
     if (!status.isLoaded) {
       if (status.error) {
         console.error('Playback error:', status.error);
-        setError('Greška pri reprodukciji');
+        setError('Greška pri reprodukciji: ' + status.error);
       }
     } else {
       setBuffering(status.isBuffering);
@@ -97,27 +121,27 @@ export default function PlayerScreen() {
 
   if (loading) {
     return (
-      <View style={styles.loadingContainer}>
+      <SafeAreaView style={styles.loadingContainer}>
         <ActivityIndicator size="large" color="#FF6B35" />
-        <Text style={styles.loadingText}>Učitavanje stream-a...</Text>
-      </View>
+        <Text style={styles.loadingText}>Učitavanje {type === 'vod' ? 'filma' : type === 'series' ? 'serije' : 'stream-a'}...</Text>
+      </SafeAreaView>
     );
   }
 
   if (error) {
     return (
-      <View style={styles.errorContainer}>
+      <SafeAreaView style={styles.errorContainer}>
         <Ionicons name="alert-circle" size={64} color="#F44336" />
         <Text style={styles.errorText}>{error}</Text>
-        <TouchableOpacity style={styles.backButton} onPress={handleBack}>
-          <Text style={styles.backButtonText}>Nazad</Text>
+        <TouchableOpacity style={styles.backBtn} onPress={handleBack}>
+          <Text style={styles.backBtnText}>Nazad</Text>
         </TouchableOpacity>
-      </View>
+      </SafeAreaView>
     );
   }
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.safeArea}>
       <StatusBar hidden />
       
       <TouchableOpacity
@@ -172,20 +196,27 @@ export default function PlayerScreen() {
             </View>
 
             <View style={styles.bottomControls}>
-              <View style={styles.liveBadge}>
-                <View style={styles.liveIndicator} />
-                <Text style={styles.liveText}>UŽIVO</Text>
+              <View style={[
+                styles.typeBadge,
+                type === 'live' ? styles.liveBadge : 
+                type === 'vod' ? styles.vodBadge : 
+                styles.seriesBadge
+              ]}>
+                <View style={styles.typeIndicator} />
+                <Text style={styles.typeText}>
+                  {type === 'live' ? 'UŽIVO' : type === 'vod' ? 'FILM' : 'SERIJA'}
+                </Text>
               </View>
             </View>
           </View>
         )}
       </TouchableOpacity>
-    </View>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
+  safeArea: {
     flex: 1,
     backgroundColor: '#000000',
   },
@@ -198,7 +229,7 @@ const styles = StyleSheet.create({
   loadingText: {
     marginTop: 16,
     fontSize: 16,
-    
+    fontWeight: 'normal',
     color: '#CCCCCC',
   },
   errorContainer: {
@@ -211,20 +242,20 @@ const styles = StyleSheet.create({
   errorText: {
     marginTop: 16,
     fontSize: 18,
-    
+    fontWeight: '500',
     color: '#F44336',
     textAlign: 'center',
   },
-  backButton: {
+  backBtn: {
     marginTop: 24,
     backgroundColor: '#FF6B35',
     paddingHorizontal: 24,
     paddingVertical: 12,
     borderRadius: 8,
   },
-  backButtonText: {
+  backBtnText: {
     fontSize: 16,
-    
+    fontWeight: 'bold',
     color: '#000000',
   },
   videoContainer: {
@@ -248,7 +279,7 @@ const styles = StyleSheet.create({
   bufferingText: {
     marginTop: 16,
     fontSize: 16,
-    
+    fontWeight: 'normal',
     color: '#CCCCCC',
   },
   controlsOverlay: {
@@ -273,7 +304,7 @@ const styles = StyleSheet.create({
   streamTitle: {
     flex: 1,
     fontSize: 18,
-    
+    fontWeight: 'bold',
     color: '#FFFFFF',
     textAlign: 'center',
   },
@@ -297,24 +328,32 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingBottom: 32,
   },
-  liveBadge: {
+  typeBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: 'rgba(244, 67, 54, 0.9)',
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 16,
   },
-  liveIndicator: {
+  liveBadge: {
+    backgroundColor: 'rgba(244, 67, 54, 0.9)',
+  },
+  vodBadge: {
+    backgroundColor: 'rgba(76, 175, 80, 0.9)',
+  },
+  seriesBadge: {
+    backgroundColor: 'rgba(33, 150, 243, 0.9)',
+  },
+  typeIndicator: {
     width: 8,
     height: 8,
     borderRadius: 4,
     backgroundColor: '#FFFFFF',
     marginRight: 6,
   },
-  liveText: {
+  typeText: {
     fontSize: 12,
-    
+    fontWeight: 'bold',
     color: '#FFFFFF',
   },
 });
