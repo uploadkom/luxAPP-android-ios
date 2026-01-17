@@ -150,7 +150,37 @@ export default function VodScreen() {
           type: 'vod',
         },
       })}
-  >
+    >
+      <Image
+        source={{ uri: item.stream_icon || 'https://via.placeholder.com/150x225/1A1A1A/FFFFFF?text=Movie' }}
+        style={styles.movieImage}
+      />
+      <LinearGradient
+        colors={['transparent', 'rgba(0,0,0,0.9)']}
+        style={styles.movieGradient}
+      >
+        <View style={styles.movieInfo}>
+          <Text style={styles.movieTitle} numberOfLines={1}>
+            {item.name}
+          </Text>
+          <View style={styles.movieMeta}>
+            {item.rating && (
+              <View style={styles.ratingContainer}>
+                <Ionicons name="star" size={12} color="#FFD700" />
+                <Text style={styles.ratingText}>{item.rating}</Text>
+              </View>
+            )}
+            {item.release_year && (
+              <Text style={styles.yearText}>{item.release_year}</Text>
+            )}
+            {item.duration && (
+              <Text style={styles.durationText}>{item.duration}</Text>
+            )}
+          </View>
+        </View>
+      </LinearGradient>
+    </TouchableOpacity>
+  );
 
   return (
     <LinearGradient colors={['#000000', '#0A0A0A']} style={styles.container}>

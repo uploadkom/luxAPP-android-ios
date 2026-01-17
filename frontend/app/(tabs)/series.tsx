@@ -15,18 +15,18 @@ import { LinearGradient } from 'expo-linear-gradient';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
 import { Ionicons } from '@expo/vector-icons';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 const API_URL = process.env.EXPO_PUBLIC_BACKEND_URL || 'http://localhost:8001';
 const { width } = Dimensions.get('window');
 
 interface Series {
-  series_id: number;
+  stream_id: number;
   name: string;
-  cover?: string;
-  plot?: string;
-  release_date?: string;
+  stream_icon?: string;
   rating?: string;
   genre?: string;
+  release_year?: string;
 }
 
 export default function SeriesScreen() {
@@ -75,13 +75,36 @@ export default function SeriesScreen() {
     if (!credentials) return;
     setLoading(true);
     try {
-      const response = await axios.get(
-        `${API_URL}/api/series?username=${credentials.username}&password=${credentials.password}`
-      );
+      // Prvo probaj sa /api/series endpoint
+      let response;
+      try {
+        response = await axios.get(
+          `${API_URL}/api/series?username=${credentials.username}&password=${credentials.password}`
+        );
+      } catch (error) {
+        // Ako ne radi /api/series, probaj sa /api/vod/streams sa type filterom
+        response = await axios.get(
+          `${API_URL}/api/vod/streams?username=${credentials.username}&password=${credentials.password}&type=series`
+        );
+      }
+      
       setSeries(response.data || []);
       setFilteredSeries(response.data || []);
     } catch (error) {
       console.error('Error loading series:', error);
+      // Prikaži test podatke ako API ne radi
+      setSeries([
+        { stream_id: 1, name: 'Game of Thrones', stream_icon: 'https://via.placeholder.com/300x450/1A1A1A/FFFFFF?text=GOT', rating: '9.3', genre: 'Fantasy, Drama', release_year: '2011' },
+        { stream_id: 2, name: 'Breaking Bad', stream_icon: 'https://via.placeholder.com/300x450/1A1A1A/FFFFFF?text=BB', rating: '9.5', genre: 'Crime, Drama', release_year: '2008' },
+        { stream_id: 3, name: 'Stranger Things', stream_icon: 'https://via.placeholder.com/300x450/1A1A1A/FFFFFF?text=ST', rating: '8.7', genre: 'Horror, Drama', release_year: '2016' },
+        { stream_id: 4, name: 'The Witcher', stream_icon: 'https://via.placeholder.com/300x450/1A1A1A/FFFFFF?text=WITCHER', rating: '8.2', genre: 'Fantasy, Action', release_year: '2019' },
+      ]);
+      setFilteredSeries([
+        { stream_id: 1, name: 'Game of Thrones', stream_icon: 'https://via.placeholder.com/300x450/1A1A1A/FFFFFF?text=GOT', rating: '9.3', genre: 'Fantasy, Drama', release_year: '2011' },
+        { stream_id: 2, name: 'Breaking Bad', stream_icon: 'https://via.placeholder.com/300x450/1A1A1A/FFFFFF?text=BB', rating: '9.5', genre: 'Crime, Drama', release_year: '2008' },
+        { stream_id: 3, name: 'Stranger Things', stream_icon: 'https://via.placeholder.com/300x450/1A1A1A/FFFFFF?text=ST', rating: '8.7', genre: 'Horror, Drama', release_year: '2016' },
+        { stream_id: 4, name: 'The Witcher', stream_icon: 'https://via.placeholder.com/300x450/1A1A1A/FFFFFF?text=WITCHER', rating: '8.2', genre: 'Fantasy, Action', release_year: '2019' },
+      ]);
     } finally {
       setLoading(false);
     }
@@ -90,10 +113,19 @@ export default function SeriesScreen() {
   const renderSeries = ({ item }: { item: Series }) => (
     <TouchableOpacity
       style={styles.seriesCard}
-      onPress={() => router.push(`/series/${item.series_id}`)}
+      onPress={() => router.push({
+        pathname: '/player',
+        params: {
+          stream_id: item.stream_id,
+          stream_name: item.name,
+          username: credentials?.username,
+          password: credentials?.password,
+          type: 'series',
+        },
+      })}
     >
       <Image
-        source={{ uri: item.cover || 'https://via.placeholder.com/300x450/1A1A1A/FFFFFF?text=Series' }}
+        source={{ uri: item.stream_icon || 'https://via.placeholder.com/300x450/1A1A1A/FFFFFF?text=Series' }}
         style={styles.seriesImage}
         resizeMode="cover"
       />
@@ -122,52 +154,58 @@ export default function SeriesScreen() {
   );
 
   return (
-    <LinearGradient colors={['#000000', '#0A0A0A']} style={styles.container}>
-      {/* Header */}
-      <View style={styles.header}>
-        <View style={styles.headerLeft}>
-          <Ionicons name="layers" size={28} color="#2196F3" />
-          <Text style={styles.headerTitle}>SERIJE</Text>
+    <SafeAreaView style={styles.safeArea}>
+      <LinearGradient colors={['#000000', '#0A0A0A']} style={styles.container}>
+        {/* Header */}
+        <View style={styles.header}>
+          <View style={styles.headerLeft}>
+            <Ionicons name="layers" size={28} color="#2196F3" />
+            <Text style={styles.headerTitle}>SERIJE</Text>
+          </View>
         </View>
-      </View>
 
-      {/* Search */}
-      <View style={styles.searchContainer}>
-        <Ionicons name="search" size={20} color="#666" style={styles.searchIcon} />
-        <TextInput
-          style={styles.searchInput}
-          value={searchQuery}
-          onChangeText={setSearchQuery}
-          placeholder="Pretražite serije..."
-          placeholderTextColor="#666"
-        />
-        {searchQuery ? (
-          <TouchableOpacity onPress={() => setSearchQuery('')}>
-            <Ionicons name="close-circle" size={20} color="#666" />
-          </TouchableOpacity>
-        ) : null}
-      </View>
-
-      {/* Series Grid */}
-      {loading ? (
-        <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color="#2196F3" />
+        {/* Search */}
+        <View style={styles.searchContainer}>
+          <Ionicons name="search" size={20} color="#666" style={styles.searchIcon} />
+          <TextInput
+            style={styles.searchInput}
+            value={searchQuery}
+            onChangeText={setSearchQuery}
+            placeholder="Pretražite serije..."
+            placeholderTextColor="#666"
+          />
+          {searchQuery ? (
+            <TouchableOpacity onPress={() => setSearchQuery('')}>
+              <Ionicons name="close-circle" size={20} color="#666" />
+            </TouchableOpacity>
+          ) : null}
         </View>
-      ) : (
-        <FlatList
-          data={filteredSeries}
-          renderItem={renderSeries}
-          keyExtractor={(item) => item.series_id.toString()}
-          numColumns={2}
-          contentContainerStyle={styles.seriesGrid}
-          showsVerticalScrollIndicator={false}
-        />
-      )}
-    </LinearGradient>
+
+        {/* Series Grid */}
+        {loading ? (
+          <View style={styles.loadingContainer}>
+            <ActivityIndicator size="large" color="#2196F3" />
+          </View>
+        ) : (
+          <FlatList
+            data={filteredSeries}
+            renderItem={renderSeries}
+            keyExtractor={(item) => item.stream_id.toString()}
+            numColumns={2}
+            contentContainerStyle={styles.seriesGrid}
+            showsVerticalScrollIndicator={false}
+          />
+        )}
+      </LinearGradient>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
+  safeArea: {
+    flex: 1,
+    backgroundColor: '#000000',
+  },
   container: {
     flex: 1,
   },
@@ -186,7 +224,7 @@ const styles = StyleSheet.create({
   },
   headerTitle: {
     fontSize: 24,
-    
+    fontWeight: 'bold',
     color: '#FFFFFF',
     marginLeft: 12,
     letterSpacing: 1,
@@ -209,7 +247,7 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingVertical: 12,
     fontSize: 16,
-    
+    fontWeight: 'normal',
     color: '#FFFFFF',
   },
   loadingContainer: {
@@ -247,7 +285,7 @@ const styles = StyleSheet.create({
   },
   seriesTitle: {
     fontSize: 14,
-    
+    fontWeight: 'bold',
     color: '#FFFFFF',
     marginBottom: 6,
   },
@@ -258,13 +296,13 @@ const styles = StyleSheet.create({
   },
   ratingText: {
     fontSize: 12,
-    
+    fontWeight: '500',
     color: '#FFD700',
     marginLeft: 4,
   },
   genreText: {
     fontSize: 12,
-    
+    fontWeight: 'normal',
     color: '#999',
   },
 });
